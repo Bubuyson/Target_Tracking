@@ -19,7 +19,7 @@ if is_seeded
 end
 
 %% Simulation parameters
-n_monte = 4;
+n_monte = 5;
 n_target = 5;
 t_max = 50;
 sim_dt = 0.01;
@@ -32,7 +32,7 @@ end
 sensor_options.radar = true;            % Field names are sensor specific and case sensitive
 
 %% Mc run that will be plotted in the figure
-index_mc = 2;
+index_mc = 1;
 assert(index_mc <= n_monte, "Index of the mc that will be plotted should be less than or equal to the number of mc runs")
 
 %% Motion models and noise matrix
@@ -77,8 +77,14 @@ if include_radar
     %% h and inverse h 
     radar_hparams.inv_h = @(y) sph2Cart_(y);
     radar_hparams.h     = @(x) cart2Sph_(x);
-    %% EKF UKF IMM selection        params = ["EKF", "UKF", "IMM"]
-    radar_hparams.algo = vars.ukf_name;
+    %% EKF UKF IMM selection        params = ["EKF", "UKF", "PF", "IMM"]
+    radar_hparams.algo = vars.pf_name;
+    if radar_hparams.algo == vars.pf_name
+        radar_hparams.n_particles = 5000;
+        radar_hparams.resample_method = "Multinomial";
+        radar_hparams.need_resample_method = "MaxWeight";
+        radar_hparams.resample_parameter = 5 / radar_hparams.n_particles;
+    end
 end
 %%
 sync_measurements = false;       % Whether all sensors measure at exactly the same time
@@ -312,7 +318,11 @@ end
 if include_radar
     radar_logs = cell(1, n_monte);
     for m = 1:n_monte
-         [radar_logs{m}] = radarTracker(meas(m).radar, radar_hparams, vars);
+        if radar_hparams.algo == vars.ekf_name || radar_hparams.algo == vars.ukf_name
+            [radar_logs{m}] = radarTracker(meas(m).radar, radar_hparams, vars);
+        elseif radar_hparams.algo == vars.pf_name
+            [radar_logs{m}] = radarTrackerPF(meas(m).radar, radar_hparams, vars);
+        end
     end
 end
 
@@ -325,7 +335,7 @@ for m = 1:n_monte
     end
 end
 % save('data.mat')
-load('data.mat')
+% load('data.mat')
 %%
 colors = chooseFromColorMap([], n_target);
 figure(); hold on; grid on; view(3)
