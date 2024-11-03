@@ -16,7 +16,7 @@ function [radar_logs] = radarTracker(radar_meas, radar_hparams, vars)
     
         radar_tracks = deleteTracks(radar_prev_tracks, t, radar_hparams.track_delete_time); %% includes downgrading
         clear radar_prev_tracks 
-        radar_tracks = predictStates(radar_tracks, radar_hparams, dt);  
+        radar_tracks = kalmanPredict(radar_tracks, radar_hparams, dt);  
         H = getNumericalJacobian(radar_hparams.h, meas_cart, [1e-4, 1e-4, 1e-4]');
         H_extended = [H, zeros(3)];
         [dists, dist_ids] = checkDist2Tracks(radar_tracks, y, radar_hparams, H_extended);

@@ -19,7 +19,7 @@ if is_seeded
 end
 
 %% Simulation parameters
-n_monte = 5;
+n_monte = 10;
 n_target = 5;
 t_max = 50;
 sim_dt = 0.01;
@@ -52,33 +52,57 @@ if include_radar
     radar_hparams.t_mean = 3;
     radar_hparams.t_var = 1;
     radar_hparams.bias = [0, 0, 0];         % [range az el]
+
     %% Track parameters
     % radar_hparams.track_threshold = 5e5;            % Beta
     radar_hparams.track_threshold = 25e0;            % Beta
     radar_hparams.track_delete_time = 5;            % Delete after x seconds of no updating
     radar_hparams.lim = 1;                         % confirmation limit
     radar_hparams.confirmation_number_req = 1;      % Required number of updates for confirmation
+
     %% False alarm parameters
     radar_hparams.lambda = 10;
-    %% Noise parameters
-    % radar_hparams.Q = eye(3) * 100^2;
-    radar_hparams.Q = eye(3) * 100^2;
+
+    %% EKF UKF IMM selection        params = ["EKF", "UKF", "PF", "IMM"]
+    radar_hparams.algo = vars.imm_name;
+
+    %% Process noise parameters
+    if radar_hparams.algo == vars.imm_name
+        radar_hparams.Q{1} = eye(3) * 30^2;
+        radar_hparams.Q{2} = eye(3) * 80^2;
+        radar_hparams.Q{3} = eye(3) * 200^2;
+        radar_hparams.n_mode = length(radar_hparams.Q);
+
+        val = 0.9; % Probability that we stay in the same mode
+        radar_hparams.PI = ones(radar_hparams.n_mode) .* (1-val) ./ (radar_hparams.n_mode - 1); % Rest of the transitions are uniform
+        for i = 1:radar_hparams.n_mode
+            radar_hparams.PI(i, i) = val;
+        end
+    else
+        radar_hparams.Q = eye(3) * 100^2;
+    end
+
+    %% Sensor noise parameters
     radar_hparams.R = diag([50; 0.01; 0.01])^2;
     % radar_hparams.R = diag([50; 0.05; 0.05])^2;
+
     %% Covariance initalization parameters
     radar_hparams.v_max = 600;
     radar_hparams.kappa = 2;
+
     %% Azimuth modding
     radar_hparams.modding_param_index = 2;
+
     %% A and B matrices
     radar_hparams.A = const_vel3;
     radar_hparams.B = B3;
     radar_hparams.init_vel = [0, 0, 0]';
+
     %% h and inverse h 
     radar_hparams.inv_h = @(y) sph2Cart_(y);
     radar_hparams.h     = @(x) cart2Sph_(x);
-    %% EKF UKF IMM selection        params = ["EKF", "UKF", "PF", "IMM"]
-    radar_hparams.algo = vars.pf_name;
+    
+    %% Parameter selection for particle filter
     if radar_hparams.algo == vars.pf_name
         radar_hparams.n_particles = 5000;
         radar_hparams.resample_method = "Multinomial";
@@ -322,6 +346,10 @@ if include_radar
             [radar_logs{m}] = radarTracker(meas(m).radar, radar_hparams, vars);
         elseif radar_hparams.algo == vars.pf_name
             [radar_logs{m}] = radarTrackerPF(meas(m).radar, radar_hparams, vars);
+        elseif radar_hparams.algo == vars.imm_name
+            [radar_logs{m}] = radarTrackerIMM(meas(m).radar, radar_hparams, vars);            
+        else
+            error("This algorithm name for Radar is not handled")
         end
     end
 end
@@ -334,9 +362,14 @@ for m = 1:n_monte
         end
     end
 end
+
+
+%%
 % save('data.mat')
 % load('data.mat')
 %%
+
+
 colors = chooseFromColorMap([], n_target);
 figure(); hold on; grid on; view(3)
 plot3(os.state(1, :), os.state(2, :), os.state(3, :), 'Color', os_color, 'LineWidth',2);

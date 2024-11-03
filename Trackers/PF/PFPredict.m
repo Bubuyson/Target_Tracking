@@ -1,4 +1,4 @@
-function tracks = predictStatesPF(tracks, sensor_params, dt)
+function tracks = PFPredict(tracks, sensor_params, dt)
     assert(dt >= 0, "There is error with measurement sequence")
     if isempty(tracks) || dt == 0
         return

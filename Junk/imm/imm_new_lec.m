@@ -81,7 +81,7 @@ for i = 2:n
     %% Predict weights
     mu = [imm(1).state.k imm(2).state.k imm(3).state.k]';
     mu_ = (PI)^T * mu;
-    MU = (PI)^T .* (repmat(mu',n_mode,1)) ./ repmat(mu_,1,n_mode); 
+    MU = (PI)^T .* (repmat(mu',n_mode,1)) ./ repmat(mu_,1,n_mode)
     %% Merging
     for j=1:n_mode
         x_IMM(:, 1)    = imm(1).state.x;
