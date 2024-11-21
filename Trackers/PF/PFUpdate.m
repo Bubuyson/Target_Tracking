@@ -9,9 +9,38 @@ function track = PFUpdate(track, H, y, t, sensor_params)
 
     y_ = h(track.particles);
     S = H * track.P * H' + R;
-    likelihoods = mvnpdf(y', y_', S)';
+    likelihoods = mvnpdf(y', y_', R)';
+    
+    % Bilgehan 
+    % % Compute log-likelihoods for each particle
+    % log_likelihoods = log(mvnpdf(y', y_', R)');
+    % 
+    % % Combine log-likelihoods with log of prior weights
+    % log_mu = log_likelihoods + log(track.mu);
+    % 
+    % % Compute the maximum log_mu for numerical stability
+    % max_log_mu = max(log_mu);
+    % 
+    % % Compute log-sum-exp in a stable manner
+    % log_sum_exp = max_log_mu + log(sum(exp(log_mu - max_log_mu)));
+    % 
+    % % Normalize the log weights
+    % log_mu = log_mu - log_sum_exp;
+    % 
+    % % Convert normalized log weights back to probability domain
+    % mu = exp(log_mu);
+    % 
+    % % Update the particle weights
+    % test_mu = mu;
+
     track.mu = likelihoods .* track.mu;
     track.mu = track.mu ./ sum(track.mu);
+
+    if all(likelihoods == zeros(1, n_particle))
+        track.mu = ones(1, n_particle) / n_particle;
+    else
+        track.mu = likelihoods .* track.mu / (sum(likelihoods .* track.mu));
+    end
     chosen_indices = 1:n_particle;                                      %#ok
     if need_resample_method == "MaxWeight" 
         if max(track.mu) > resample_parameter
@@ -31,6 +60,7 @@ function track = PFUpdate(track, H, y, t, sensor_params)
     else
         error("This need resample method is not implemented")
     end
+
     track.particles = track.particles(:, chosen_indices);
     % TODO: Modding of the states, one idea is to separately handle 
     % positive and negative values of azimuth, then combine

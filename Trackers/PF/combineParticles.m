@@ -4,7 +4,8 @@ function track = combineParticles(track)
     track.P = zeros(size(track.P)); 
     for j = 1:n_particles
         innov = track.particles(j) - track.x;
-        track.P = track.P + innov * innov';
+        %% TODO: Look at this formula
+        track.P = track.P + track.mu(j)*(innov * innov');
     end
     track.P = track.P / n_particles;
 end

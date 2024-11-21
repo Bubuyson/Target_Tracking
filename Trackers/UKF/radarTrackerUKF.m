@@ -1,4 +1,4 @@
-function [radar_logs] = radarTracker(radar_meas, radar_hparams, vars)
+function [radar_logs] = radarTrackerUKF(radar_meas, radar_hparams, vars)
     prev_t = 0;
     track_counter = 0;
     n_meas = size(radar_meas.sph_all_w_fa, 2);
@@ -37,13 +37,7 @@ function [radar_logs] = radarTracker(radar_meas, radar_hparams, vars)
         else
             for j = 1:length(radar_tracks)
                 if radar_tracks(j).track_id == track_id
-                    if radar_hparams.algo == vars.ekf_name
-                        radar_tracks(j) = kalmanUpdateEKF_KF(radar_tracks(j), H_extended, y, t, radar_hparams);
-                    elseif radar_hparams.algo == vars.ukf_name
-                        radar_tracks(j) = kalmanUpdateUKF(radar_tracks(j), y, t, radar_hparams);
-                    else
-                        error("Update algorithm is not named correctly")
-                    end
+                    radar_tracks(j) = kalmanUpdateUKF(radar_tracks(j), y, t, radar_hparams);
                     break
                 end
             end
@@ -54,6 +48,8 @@ function [radar_logs] = radarTracker(radar_meas, radar_hparams, vars)
         for j = 1:length(radar_tracks)
             if radar_tracks(j).status == "confirmed" && radar_tracks(j).confirmation_counter >= radar_hparams.confirmation_number_req
                 confirmed_tracks(end+1) = radar_tracks(j);            %#ok
+                assert(~any(isnan(radar_tracks(j).x)))
+                % assert(radar_tracks)
             end
         end
         radar_logs.confirmed_track_log{i} = confirmed_tracks;

@@ -48,12 +48,15 @@ function [radar_logs] = radarTrackerIMM(radar_meas, radar_hparams, vars)
         end
         radar_logs.track_log{i} = radar_tracks;
     
-        confirmed_tracks = struct('track_id', {}, 't', {}, 'x', {});
+        confirmed_tracks = struct('track_id', {}, 't', {}, 'x', {}, 'mu', {}, 'P', {});
         for j = 1:length(radar_tracks)
             if radar_tracks(j).status == "confirmed" && radar_tracks(j).confirmation_counter >= radar_hparams.confirmation_number_req
                 n = length(confirmed_tracks);
                 merged_track = mergeTracks(radar_tracks(j));
+                assert(~any(isnan(radar_tracks(j).x), 'all'))
+                assert(~any(isnan(radar_tracks(j).mu), 'all'))
                 confirmed_tracks(n + 1).x = merged_track.x;              
+                confirmed_tracks(n + 1).P = merged_track.P;
                 confirmed_tracks(n + 1).t = radar_tracks(j).t;            
                 confirmed_tracks(n + 1).track_id = radar_tracks(j).track_id; 
                 confirmed_tracks(n + 1).mu = radar_tracks(j).mu ; 

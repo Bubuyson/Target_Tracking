@@ -20,7 +20,12 @@ function track = IMMUpdate(track, H, y, t, sensor_params)
 
         likelihood(i) = mvnpdf(y, y_, S);
     end
-    track.mu = likelihood .* track.mu / (sum(likelihood .* track.mu));
+    if all(likelihood == zeros(1, sensor_params.n_mode))
+        track.mu = ones(1, sensor_params.n_mode) / sensor_params.n_mode;
+    else
+        track.mu = likelihood .* track.mu / (sum(likelihood .* track.mu));
+    end
+    
     track.t = t; 
     track = upgradeStatus(track, lim);
 end
