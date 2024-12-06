@@ -14,5 +14,3 @@ function tracks = IMMPredict(tracks, sensor_params, dt)
         tracks(i).mu = ((sensor_params.PI)^dt * tracks(i).mu')';
     end
 end
-
-    %% TODO: Normalization of mu is not necessary, is it?

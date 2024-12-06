@@ -25,7 +25,6 @@ function [radar_logs] = radarTrackerPF(radar_meas, radar_hparams, vars)
             inv_H = getNumericalJacobian(radar_hparams.inv_h, y, [1e-4, 1e-5, 1e-5]');
             track_counter = track_counter + 1;
             P = blkdiag(inv_H * radar_hparams.R * inv_H', (radar_hparams.v_max / radar_hparams.kappa)^2 * eye(3));
-            %% TODO: Check if its necessary to spread the first particles
             x_ = [meas_cart; radar_hparams.init_vel];
             particles = mvnrnd(x_, P, radar_hparams.n_particles)';
             track = sensorTrackConstuctorPF('sensor_name', vars.radar_name,...

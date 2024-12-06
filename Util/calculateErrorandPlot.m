@@ -57,13 +57,18 @@ function calculateErrorandPlot(radar_logs, meas, valid_n_monte, n_target, n_mont
     
     cart_pos_error_mean_of_means = mean(sum(cart_error_prism, 1) ./ n_track_log, 3);
     cart_vel_error_mean_of_means = mean(sum(vel_error_prism, 1) ./ n_track_log, 3);
-    non_zero_indexes = find(cart_pos_error_mean_of_means);
+    non_zero_indexes = ~isnan(cart_pos_error_mean_of_means);
     
     
     cart_pos_error_mean_of_means = cart_pos_error_mean_of_means(non_zero_indexes);
     cart_vel_error_mean_of_means = cart_vel_error_mean_of_means(non_zero_indexes);
     track_times = track_times(non_zero_indexes);
     
+    mean_cart_pos_error = mean(cart_pos_error_mean_of_means);
+    mean_cart_vel_error = mean(cart_vel_error_mean_of_means);
+
+    disp(my_map(algo_name) + " algorithm makes " + num2str(mean_cart_pos_error) + " m mean positional error")
+    disp(my_map(algo_name) + " algorithm makes " + num2str(mean_cart_vel_error) + " m/s mean velocity error")
     
     figure();
     subplot(2, 1, 1); hold on; grid on
@@ -72,7 +77,8 @@ function calculateErrorandPlot(radar_logs, meas, valid_n_monte, n_target, n_mont
     subplot(2, 1, 2); hold on; grid on
     plot(track_times , cart_vel_error_mean_of_means, 'LineWidth', 2, 'Color', 'r')
     xlabel('time (s)'); ylabel('Velocity error (m/s)'); title('Cartesian Velocity Errors wrt Time')
-    str = (my_map(algo_name) + " Results");
-    sgtitle(str)
+    str = (my_map(algo_name) + " Results: pos error = " + num2str(mean_cart_pos_error) + ", vel error = " +  num2str(mean_cart_vel_error));
+    sg = sgtitle(str);
+    sg.FontSize = 12;
 
 end

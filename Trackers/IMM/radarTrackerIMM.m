@@ -20,7 +20,6 @@ function [radar_logs] = radarTrackerIMM(radar_meas, radar_hparams, vars)
         radar_tracks = IMMPredict(radar_tracks, radar_hparams, dt);  
         H = getNumericalJacobian(radar_hparams.h, meas_cart, [1e-4, 1e-4, 1e-4]');
         H_extended = [H, zeros(3)];
-        %% TODO: Change this to mixing, this is not correct
         merged_tracks = mergeTracks(radar_tracks);
         [dists, dist_ids] = checkDist2Tracks(merged_tracks, y, radar_hparams, H_extended);
         [track_id, is_new_track] = mapDist2Tracks(dists, dist_ids, radar_hparams.track_threshold);
